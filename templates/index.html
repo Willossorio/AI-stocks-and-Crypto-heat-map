@@ -16,7 +16,7 @@
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     min-height: 100vh;
-    padding: 16px;
+    padding: 12px 16px;
     display: flex;
     flex-direction: column;
   }
@@ -24,85 +24,50 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 10px;
     flex-shrink: 0;
   }
-  h1 {
-    font-size: 1.8rem;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-  }
-  .controls {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
+  h1 { font-size: 1.7rem; font-weight: 700; }
+  .controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   button, .period-btn {
-    background: #374151;
-    color: white;
-    border: none;
-    padding: 10px 16px;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: background 0.15s;
+    background: #374151; color: white; border: none;
+    padding: 8px 14px; border-radius: 8px; font-size: 0.9rem; cursor: pointer;
   }
-  button:hover, .period-btn:hover { background: #4b5563; }
-  .period-btn.active {
-    background: #2563eb;
-  }
-  #updated {
-    color: var(--muted);
-    font-size: 0.85rem;
+  .period-btn.active { background: #2563eb; }
+  #updated { color: var(--muted); font-size: 0.8rem; }
+  .section-title {
+    font-size: 0.85rem; color: var(--muted); margin: 16px 0 8px 4px;
+    text-transform: uppercase; letter-spacing: 1px;
   }
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-    gap: 14px;
-    max-width: 1400px;
-    margin: 0 auto;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    width: 100%;
+  }
+  .main-grid {
+    flex: 1;
+    grid-auto-rows: minmax(110px, 1fr);
+  }
+  .macro-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    max-width: 500px;
   }
   .tile {
-    aspect-ratio: 1;
-    border-radius: 16px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    padding: 14px;
-    transition: transform 0.15s, box-shadow 0.15s;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    border-radius: 14px;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    text-align: center; padding: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+    min-height: 100px;
   }
-  .tile:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-  }
-  .ticker {
-    font-size: 1.6rem;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-    margin-bottom: 6px;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
-  }
-  .change {
-    font-size: 1.35rem;
-    font-weight: 700;
-    margin-bottom: 4px;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
-  }
-  .price {
-    font-size: 1.1rem;
-    opacity: 0.95;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
-  }
+  .ticker { font-size: 1.45rem; font-weight: 800; margin-bottom: 4px; }
+  .change { font-size: 1.2rem; font-weight: 700; margin-bottom: 2px; }
+  .price { font-size: 1rem; opacity: 0.95; }
   @media (max-width: 600px) {
-    .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .ticker { font-size: 1.3rem; }
-    .change { font-size: 1.15rem; }
+    .grid { grid-template-columns: repeat(2, 1fr); }
+    .ticker { font-size: 1.2rem; }
   }
 </style>
 </head>
@@ -117,17 +82,24 @@
       <button id="refreshBtn" onclick="loadPrices()">Refresh</button>
     </div>
   </header>
-  <div class="grid" id="grid"></div>
+
+  <div class="grid main-grid" id="mainGrid"></div>
+  <div class="section-title">Macro</div>
+  <div class="grid macro-grid" id="macroGrid"></div>
 
 <script>
-const TICKERS = [
-  "QQQ", "NVDA", "AVGO", "TSM", "MU", "AMD", "MRVL", "ALAB",
+const MAIN = [
+  "QQQ", "SMH", "NVDA", "AVGO", "TSM", "MU", "AMD", "MRVL", "ALAB",
   "ASML", "GOOGL", "TSLA", "SPCX", "PLTR", "SKHY",
   "MSTR", "ASST",
-  "BTC-USD", "ETH-USD", "SOL-USD", "HYPE-USD"
+  "BTC-USD", "ETH-USD", "SOL-USD", "HYPE32196-USD"
 ];
+const MACRO = ["DX-Y.NYB", "^VIX"];
 
 function displayName(ticker) {
+  if (ticker === "HYPE32196-USD") return "HYPE";
+  if (ticker === "DX-Y.NYB") return "DXY";
+  if (ticker === "^VIX") return "VIX";
   return ticker.replace("-USD", "");
 }
 
@@ -137,29 +109,39 @@ function formatPrice(p) {
   if (p == null) return "—";
   return p >= 1000 ? p.toLocaleString(undefined, {maximumFractionDigits: 0}) : p.toFixed(2);
 }
-
 function formatChange(c) {
   if (c == null) return "N/A";
   const sign = c > 0 ? "+" : "";
   return sign + c.toFixed(2) + "%";
 }
 
+function makeTile(t) {
+  const tile = document.createElement("div");
+  tile.className = "tile";
+  tile.style.background = t.color || "#6b7280";
+  tile.style.color = "#ffffff";
+  tile.innerHTML = `
+    <div class="ticker">${displayName(t.ticker)}</div>
+    <div class="change">${formatChange(t.change_pct)}</div>
+    <div class="price">${formatPrice(t.price)}</div>
+  `;
+  return tile;
+}
+
 function renderTiles(tiles) {
-  const grid = document.getElementById("grid");
-  grid.innerHTML = "";
   const map = Object.fromEntries(tiles.map(t => [t.ticker, t]));
-  TICKERS.forEach(ticker => {
+  const mainGrid = document.getElementById("mainGrid");
+  const macroGrid = document.getElementById("macroGrid");
+  mainGrid.innerHTML = "";
+  macroGrid.innerHTML = "";
+
+  MAIN.forEach(ticker => {
     const t = map[ticker] || { ticker, price: null, change_pct: null, color: "#6b7280" };
-    const tile = document.createElement("div");
-    tile.className = "tile";
-    tile.style.background = t.color;
-    tile.style.color = "#ffffff";  // white text for readability
-    tile.innerHTML = `
-      <div class="ticker">${displayName(t.ticker)}</div>
-      <div class="change">${formatChange(t.change_pct)}</div>
-      <div class="price">${formatPrice(t.price)}</div>
-    `;
-    grid.appendChild(tile);
+    mainGrid.appendChild(makeTile(t));
+  });
+  MACRO.forEach(ticker => {
+    const t = map[ticker] || { ticker, price: null, change_pct: null, color: "#6b7280" };
+    macroGrid.appendChild(makeTile(t));
   });
 }
 
@@ -184,14 +166,13 @@ async function loadPrices() {
     upd.textContent = "Updated: " + data.updated;
   } catch (err) {
     console.error(err);
-    upd.textContent = "Failed to load. Check server.";
+    upd.textContent = "Failed to load.";
   } finally {
     btn.disabled = false;
     btn.textContent = "Refresh";
   }
 }
 
-// Initial load
 loadPrices();
 </script>
 </body>

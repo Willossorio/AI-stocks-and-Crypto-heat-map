@@ -11,64 +11,58 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-TICKERS = [
-    "QQQ", "NVDA", "AVGO", "TSM", "MU", "AMD", "MRVL", "ALAB",
+# Main watchlist (chips first, then others, crypto last)
+MAIN_TICKERS = [
+    "QQQ", "SMH", "NVDA", "AVGO", "TSM", "MU", "AMD", "MRVL", "ALAB",
     "ASML", "GOOGL", "TSLA", "SPCX", "PLTR", "SKHY",
     "MSTR", "ASST",
-    "BTC-USD", "ETH-USD", "SOL-USD", "HYPE-USD"
+    "BTC-USD", "ETH-USD", "SOL-USD", "HYPE32196-USD"
 ]
+
+# Macro indicators in their own section
+MACRO_TICKERS = ["DX-Y.NYB", "^VIX"]
+
+ALL_TICKERS = MAIN_TICKERS + MACRO_TICKERS
 
 def get_color(pct):
     """Bright green if up, red if down, gray if unavailable."""
     if pct is None or pd.isna(pct):
         return "#6b7280"
     if pct > 0:
-        return "#4ade80"   # bright light green
+        return "#4ade80"
     elif pct < 0:
-        return "#f87171"   # bright red
+        return "#f87171"
     else:
-        return "#9ca3af"   # neutral gray
+        return "#9ca3af"
 
 def fetch_prices(period="1d"):
-    """Fetch latest price and % change for the chosen period."""
-    # Map user period to yfinance lookback
     if period == "1w":
         yf_period = "1mo"
-        lookback = 5          # ~1 trading week
+        lookback = 5
     elif period == "1m":
         yf_period = "3mo"
-        lookback = 21         # ~1 trading month
-    else:  # 1d
+        lookback = 21
+    else:
         yf_period = "5d"
         lookback = 1
 
     results = []
     try:
-        data = yf.download(TICKERS, period=yf_period, interval="1d", progress=False, auto_adjust=True)
+        data = yf.download(ALL_TICKERS, period=yf_period, interval="1d", progress=False, auto_adjust=True)
         if data.empty:
             raise ValueError("No data returned")
 
         closes = data["Close"] if "Close" in data.columns else data
 
-        for ticker in TICKERS:
+        for ticker in ALL_TICKERS:
             try:
                 if ticker not in closes.columns:
-                    results.append({
-                        "ticker": ticker,
-                        "price": None,
-                        "change_pct": None,
-                        "color": get_color(None)
-                    })
+                    results.append({"ticker": ticker, "price": None, "change_pct": None, "color": get_color(None)})
                     continue
 
                 series = closes[ticker].dropna()
                 if len(series) <= lookback:
-                    results.append({
-                        "ticker": ticker,
-                        "price": None,
-                        "change_pct": None,
-                        "color": get_color(None)
-                    })
+                    results.append({"ticker": ticker, "price": None, "change_pct": None, "color": get_color(None)})
                     continue
 
                 current = float(series.iloc[-1])
@@ -83,21 +77,11 @@ def fetch_prices(period="1d"):
                 })
             except Exception as e:
                 print(f"Error for {ticker}: {e}")
-                results.append({
-                    "ticker": ticker,
-                    "price": None,
-                    "change_pct": None,
-                    "color": get_color(None)
-                })
+                results.append({"ticker": ticker, "price": None, "change_pct": None, "color": get_color(None)})
     except Exception as e:
         print(f"Download failed: {e}")
-        for ticker in TICKERS:
-            results.append({
-                "ticker": ticker,
-                "price": None,
-                "change_pct": None,
-                "color": get_color(None)
-            })
+        for ticker in ALL_TICKERS:
+            results.append({"ticker": ticker, "price": None, "change_pct": None, "color": get_color(None)})
 
     return results
 
@@ -121,5 +105,4 @@ import os
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    print(f"Starting heatmap server at http://127.0.0.1:{port}")
     app.run(host="0.0.0.0", port=port, debug=False)
