@@ -60,13 +60,17 @@
     aspect-ratio: 1;
     border-radius: 16px;
   }
+  .tile.index {
+    aspect-ratio: 1.15;
+    border-radius: 22px;
+  }
   .tile.circle {
     aspect-ratio: 1;
     border-radius: 50%;
   }
-  .ticker { font-size: 1.5rem; font-weight: 800; margin-bottom: 4px; line-height: 1.1; }
-  .change { font-size: 1.25rem; font-weight: 700; margin-bottom: 2px; }
-  .price { font-size: 1.05rem; opacity: 0.95; }
+  .ticker { font-size: 1.875rem; font-weight: 800; margin-bottom: 4px; line-height: 1.1; }
+  .change { font-size: 1.56rem; font-weight: 700; margin-bottom: 2px; }
+  .price { font-size: 1.31rem; opacity: 0.95; }
   @media (max-width: 700px) {
     .grid { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
     .ticker { font-size: 1.2rem; }
@@ -96,6 +100,7 @@ const TICKERS = [
   "MSTR", "ASST",
   "BTC-USD", "ETH-USD", "SOL-USD", "HYPE32196-USD"
 ];
+const INDEXES = new Set(["DX-Y.NYB", "^VIX", "QQQ"]);
 const CRYPTO = new Set(["BTC-USD", "ETH-USD", "SOL-USD", "HYPE32196-USD"]);
 
 function displayName(ticker) {
@@ -119,8 +124,7 @@ function formatChange(c) {
 
 function makeTile(t) {
   const tile = document.createElement("div");
-  const isCrypto = CRYPTO.has(t.ticker);
-  tile.className = "tile " + (isCrypto ? "circle" : "square");
+  tile.className = "tile " + (INDEXES.has(t.ticker) ? "index" : "square");
   tile.style.background = t.color || "#6b7280";
   tile.style.color = "#ffffff";
   tile.innerHTML = `
