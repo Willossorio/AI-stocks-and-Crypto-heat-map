@@ -11,16 +11,15 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-# Main watchlist (chips first, then others, crypto last)
 MAIN_TICKERS = [
+    "DX-Y.NYB", "^VIX",
     "QQQ", "SMH", "NVDA", "AVGO", "TSM", "MU", "AMD", "MRVL", "ALAB",
     "ASML", "GOOGL", "TSLA", "SPCX", "PLTR", "SKHY",
     "MSTR", "ASST",
     "BTC-USD", "ETH-USD", "SOL-USD", "HYPE32196-USD"
 ]
 
-# Macro indicators in their own section
-MACRO_TICKERS = ["DX-Y.NYB", "^VIX"]
+MACRO_TICKERS = []
 
 ALL_TICKERS = MAIN_TICKERS + MACRO_TICKERS
 
