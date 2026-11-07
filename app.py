@@ -4,7 +4,7 @@ Custom Stock & Crypto Heatmap
 Uses yfinance for free price data. No API keys required.
 """
 
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request
 import yfinance as yf
 import pandas as pd
 from datetime import datetime
@@ -14,38 +14,45 @@ app = Flask(__name__)
 TICKERS = [
     "QQQ", "NVDA", "AVGO", "TSM", "MU", "AMD", "MRVL", "ALAB",
     "ASML", "GOOGL", "TSLA", "SPCX", "PLTR", "SKHY",
-    "BTC-USD", "ETH-USD", "SOL-USD", "MSTR"
+    "MSTR", "ASST",
+    "BTC-USD", "ETH-USD", "SOL-USD", "HYPE-USD"
 ]
 
 def get_color(pct):
-    """Return hex color: full red at -5%, full green at +5%, gray if None."""
+    """Bright green if up, red if down, gray if unavailable."""
     if pct is None or pd.isna(pct):
-        return "#6b7280"  # gray-500
-    # Clamp
-    p = max(-5.0, min(5.0, float(pct)))
-    # t: 0 at -5, 1 at +5
-    t = (p + 5.0) / 10.0
-    r = int(255 * (1 - t))
-    g = int(255 * t)
-    b = 0
-    return f"#{r:02x}{g:02x}{b:02x}"
+        return "#6b7280"
+    if pct > 0:
+        return "#4ade80"   # bright light green
+    elif pct < 0:
+        return "#f87171"   # bright red
+    else:
+        return "#9ca3af"   # neutral gray
 
-def fetch_prices():
-    """Fetch latest price and 1-day % change for all tickers."""
+def fetch_prices(period="1d"):
+    """Fetch latest price and % change for the chosen period."""
+    # Map user period to yfinance lookback
+    if period == "1w":
+        yf_period = "1mo"
+        lookback = 5          # ~1 trading week
+    elif period == "1m":
+        yf_period = "3mo"
+        lookback = 21         # ~1 trading month
+    else:  # 1d
+        yf_period = "5d"
+        lookback = 1
+
     results = []
     try:
-        # Download recent daily data for all at once
-        data = yf.download(TICKERS, period="5d", interval="1d", progress=False, auto_adjust=True)
+        data = yf.download(TICKERS, period=yf_period, interval="1d", progress=False, auto_adjust=True)
         if data.empty:
             raise ValueError("No data returned")
 
-        # Handle MultiIndex columns
         closes = data["Close"] if "Close" in data.columns else data
 
         for ticker in TICKERS:
             try:
                 if ticker not in closes.columns:
-                    # Try crypto style or fail
                     results.append({
                         "ticker": ticker,
                         "price": None,
@@ -55,7 +62,7 @@ def fetch_prices():
                     continue
 
                 series = closes[ticker].dropna()
-                if len(series) < 2:
+                if len(series) <= lookback:
                     results.append({
                         "ticker": ticker,
                         "price": None,
@@ -65,7 +72,7 @@ def fetch_prices():
                     continue
 
                 current = float(series.iloc[-1])
-                prev = float(series.iloc[-2])
+                prev = float(series.iloc[-1 - lookback])
                 change_pct = ((current - prev) / prev) * 100 if prev != 0 else None
 
                 results.append({
@@ -84,7 +91,6 @@ def fetch_prices():
                 })
     except Exception as e:
         print(f"Download failed: {e}")
-        # Fallback individual if batch fails
         for ticker in TICKERS:
             results.append({
                 "ticker": ticker,
@@ -101,9 +107,13 @@ def index():
 
 @app.route("/api/prices")
 def api_prices():
-    data = fetch_prices()
+    period = request.args.get("period", "1d")
+    if period not in ("1d", "1w", "1m"):
+        period = "1d"
+    data = fetch_prices(period)
     return jsonify({
         "updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "period": period,
         "tiles": data
     })
 
@@ -112,5 +122,4 @@ import os
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     print(f"Starting heatmap server at http://127.0.0.1:{port}")
-    print("Open that URL in your browser. Press Ctrl+C to stop.")
     app.run(host="0.0.0.0", port=port, debug=False)

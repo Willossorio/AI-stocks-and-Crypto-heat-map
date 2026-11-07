@@ -123,8 +123,13 @@
 const TICKERS = [
   "QQQ", "NVDA", "AVGO", "TSM", "MU", "AMD", "MRVL", "ALAB",
   "ASML", "GOOGL", "TSLA", "SPCX", "PLTR", "SKHY",
-  "BTC-USD", "ETH-USD", "SOL-USD", "MSTR"
+  "MSTR", "ASST",
+  "BTC-USD", "ETH-USD", "SOL-USD", "HYPE-USD"
 ];
+
+function displayName(ticker) {
+  return ticker.replace("-USD", "");
+}
 
 let currentPeriod = "1d";
 
@@ -148,9 +153,9 @@ function renderTiles(tiles) {
     const tile = document.createElement("div");
     tile.className = "tile";
     tile.style.background = t.color;
-    tile.style.color = "#111827";  // dark text for better contrast on bright colors
+    tile.style.color = "#ffffff";  // white text for readability
     tile.innerHTML = `
-      <div class="ticker">${t.ticker}</div>
+      <div class="ticker">${displayName(t.ticker)}</div>
       <div class="change">${formatChange(t.change_pct)}</div>
       <div class="price">${formatPrice(t.price)}</div>
     `;
