@@ -42,39 +42,54 @@
   .grid {
     flex: 1;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     grid-auto-rows: 1fr;
-    gap: 12px;
+    gap: 10px;
     width: 100%;
     min-height: 0;
-    align-content: stretch;
   }
-  .tile {
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-    text-align: center; padding: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  .cell {
+    min-width: 0;
     min-height: 0;
+    display: grid;
+    place-items: center;
+    container-type: size;
+  }
+  .blob {
+    width: min(100cqw, 100cqh);
+    height: min(100cqw, 100cqh);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    text-align: center;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     overflow: hidden;
+    padding: 14% 8% 9%;
   }
-  .tile.square {
-    aspect-ratio: 1;
-    border-radius: 16px;
-  }
-  .tile.index {
-    aspect-ratio: 1.15;
-    border-radius: 22px;
-  }
-  .tile.circle {
-    aspect-ratio: 1;
+  .blob.square { border-radius: 18px; }
+  .blob.index {
     border-radius: 50%;
+    padding: 18% 12% 14%;
   }
-  .ticker { font-size: 1.875rem; font-weight: 800; margin-bottom: 4px; line-height: 1.1; }
-  .change { font-size: 1.56rem; font-weight: 700; margin-bottom: 2px; }
-  .price { font-size: 1.31rem; opacity: 0.95; }
-  @media (max-width: 700px) {
-    .grid { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
-    .ticker { font-size: 1.2rem; }
-    .change { font-size: 1.05rem; }
+  .label {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+  }
+  .ticker { font-size: clamp(1.15rem, 8cqmin, 2rem); font-weight: 800; line-height: 1.05; }
+  .change { font-size: clamp(1rem, 6.5cqmin, 1.7rem); font-weight: 700; margin-top: 4px; }
+  .price {
+    font-size: clamp(1.25rem, 8.5cqmin, 2.15rem);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    width: 100%;
+    text-align: center;
   }
 </style>
 </head>
@@ -123,16 +138,20 @@ function formatChange(c) {
 }
 
 function makeTile(t) {
-  const tile = document.createElement("div");
-  tile.className = "tile " + (INDEXES.has(t.ticker) ? "index" : "square");
-  tile.style.background = t.color || "#6b7280";
-  tile.style.color = "#ffffff";
-  tile.innerHTML = `
-    <div class="ticker">${displayName(t.ticker)}</div>
-    <div class="change">${formatChange(t.change_pct)}</div>
+  const cell = document.createElement("div");
+  cell.className = "cell";
+  const blob = document.createElement("div");
+  blob.className = "blob " + (INDEXES.has(t.ticker) ? "index" : "square");
+  blob.style.background = t.color || "#6b7280";
+  blob.innerHTML = `
+    <div class="label">
+      <div class="ticker">${displayName(t.ticker)}</div>
+      <div class="change">${formatChange(t.change_pct)}</div>
+    </div>
     <div class="price">${formatPrice(t.price)}</div>
   `;
-  return tile;
+  cell.appendChild(blob);
+  return cell;
 }
 
 function renderTiles(tiles) {
