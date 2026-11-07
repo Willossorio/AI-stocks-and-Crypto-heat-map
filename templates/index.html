@@ -3,11 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Custom Stock & Crypto Heatmap</title>
+<title>Willow's Heatmap</title>
 <style>
   :root {
     --bg: #0f1117;
-    --card-bg: #1a1d27;
     --text: #e5e7eb;
     --muted: #9ca3af;
   }
@@ -17,46 +16,52 @@
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     min-height: 100vh;
-    padding: 24px 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
   }
   header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
     flex-wrap: wrap;
     gap: 12px;
+    flex-shrink: 0;
   }
   h1 {
-    font-size: 1.6rem;
-    font-weight: 600;
+    font-size: 1.8rem;
+    font-weight: 700;
     letter-spacing: -0.5px;
   }
   .controls {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
+    flex-wrap: wrap;
   }
-  button {
+  button, .period-btn {
     background: #374151;
     color: white;
     border: none;
-    padding: 10px 20px;
+    padding: 10px 16px;
     border-radius: 8px;
     font-size: 0.95rem;
     cursor: pointer;
     transition: background 0.15s;
   }
-  button:hover { background: #4b5563; }
-  button:active { transform: scale(0.98); }
+  button:hover, .period-btn:hover { background: #4b5563; }
+  .period-btn.active {
+    background: #2563eb;
+  }
   #updated {
     color: var(--muted);
     font-size: 0.85rem;
   }
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 14px;
     max-width: 1400px;
     margin: 0 auto;
   }
@@ -68,49 +73,47 @@
     justify-content: center;
     align-items: center;
     text-align: center;
-    padding: 12px;
+    padding: 14px;
     transition: transform 0.15s, box-shadow 0.15s;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    position: relative;
-    overflow: hidden;
   }
   .tile:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(0,0,0,0.4);
   }
   .ticker {
-    font-size: 1.35rem;
-    font-weight: 700;
+    font-size: 1.6rem;
+    font-weight: 800;
     letter-spacing: 0.5px;
-    margin-bottom: 4px;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    margin-bottom: 6px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
   }
   .change {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 2px;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
   }
   .price {
-    font-size: 0.95rem;
-    opacity: 0.9;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-  }
-  .loading {
-    opacity: 0.6;
+    font-size: 1.1rem;
+    opacity: 0.95;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
   }
   @media (max-width: 600px) {
-    .grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .tile { border-radius: 12px; }
-    .ticker { font-size: 1.1rem; }
+    .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .ticker { font-size: 1.3rem; }
+    .change { font-size: 1.15rem; }
   }
 </style>
 </head>
 <body>
   <header>
-    <h1>InvestAnswers-style Heatmap</h1>
+    <h1>Willow's Heatmap</h1>
     <div class="controls">
       <span id="updated">Loading…</span>
+      <button class="period-btn active" data-period="1d" onclick="setPeriod('1d')">1 Day</button>
+      <button class="period-btn" data-period="1w" onclick="setPeriod('1w')">1 Week</button>
+      <button class="period-btn" data-period="1m" onclick="setPeriod('1m')">1 Month</button>
       <button id="refreshBtn" onclick="loadPrices()">Refresh</button>
     </div>
   </header>
@@ -122,6 +125,8 @@ const TICKERS = [
   "ASML", "GOOGL", "TSLA", "SPCX", "PLTR", "SKHY",
   "BTC-USD", "ETH-USD", "SOL-USD", "MSTR"
 ];
+
+let currentPeriod = "1d";
 
 function formatPrice(p) {
   if (p == null) return "—";
@@ -137,16 +142,13 @@ function formatChange(c) {
 function renderTiles(tiles) {
   const grid = document.getElementById("grid");
   grid.innerHTML = "";
-  // Ensure order matches TICKERS even if API returns differently
   const map = Object.fromEntries(tiles.map(t => [t.ticker, t]));
   TICKERS.forEach(ticker => {
     const t = map[ticker] || { ticker, price: null, change_pct: null, color: "#6b7280" };
     const tile = document.createElement("div");
     tile.className = "tile";
     tile.style.background = t.color;
-    // Choose text color for contrast
-    const isDark = isColorDark(t.color);
-    tile.style.color = isDark ? "#ffffff" : "#111827";
+    tile.style.color = "#111827";  // dark text for better contrast on bright colors
     tile.innerHTML = `
       <div class="ticker">${t.ticker}</div>
       <div class="change">${formatChange(t.change_pct)}</div>
@@ -156,14 +158,12 @@ function renderTiles(tiles) {
   });
 }
 
-function isColorDark(hex) {
-  if (!hex || hex.length < 7) return true;
-  const r = parseInt(hex.slice(1,3), 16);
-  const g = parseInt(hex.slice(3,5), 16);
-  const b = parseInt(hex.slice(5,7), 16);
-  // Luminance
-  const lum = (0.299*r + 0.587*g + 0.114*b) / 255;
-  return lum < 0.5;
+function setPeriod(period) {
+  currentPeriod = period;
+  document.querySelectorAll(".period-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.period === period);
+  });
+  loadPrices();
 }
 
 async function loadPrices() {
@@ -173,7 +173,7 @@ async function loadPrices() {
   btn.textContent = "Refreshing…";
   upd.textContent = "Fetching…";
   try {
-    const res = await fetch("/api/prices");
+    const res = await fetch(`/api/prices?period=${currentPeriod}`);
     const data = await res.json();
     renderTiles(data.tiles);
     upd.textContent = "Updated: " + data.updated;
