@@ -66,12 +66,13 @@
     color: #fff;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     overflow: hidden;
-    padding: 14% 8% 9%;
+    padding: 12% 8% 10%;
+    position: relative;
   }
   .blob.square { border-radius: 18px; }
   .blob.index {
-    border-radius: 50%;
-    padding: 18% 12% 14%;
+    border-radius: 50% !important;
+    padding: 16% 10% 18%;
   }
   .label {
     flex: 1;
@@ -80,16 +81,19 @@
     align-items: center;
     justify-content: center;
     min-height: 0;
+    width: 100%;
   }
-  .ticker { font-size: clamp(1.15rem, 8cqmin, 2rem); font-weight: 800; line-height: 1.05; }
-  .change { font-size: clamp(1rem, 6.5cqmin, 1.7rem); font-weight: 700; margin-top: 4px; }
+  .ticker { font-size: clamp(1.1rem, 7.5cqmin, 1.9rem); font-weight: 800; line-height: 1.05; }
+  .change { font-size: clamp(0.95rem, 6cqmin, 1.55rem); font-weight: 700; margin-top: 2px; }
   .price {
-    font-size: clamp(1.25rem, 8.5cqmin, 2.15rem);
+    font-size: clamp(1.45rem, 10cqmin, 2.4rem);
     font-weight: 800;
     line-height: 1;
-    letter-spacing: -0.02em;
-    width: 100%;
-    text-align: center;
+    letter-spacing: -0.03em;
+    position: absolute;
+    bottom: 10%;
+    right: 12%;
+    text-align: right;
   }
 </style>
 </head>
