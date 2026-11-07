@@ -12,8 +12,8 @@ from datetime import datetime
 app = Flask(__name__)
 
 MAIN_TICKERS = [
-    "DX-Y.NYB", "^VIX",
-    "QQQ", "SMH", "NVDA", "AVGO", "TSM", "MU", "AMD", "MRVL", "ALAB",
+    "DX-Y.NYB", "^VIX", "QQQ", "SMH", "DIA", "USO",
+    "NVDA", "AVGO", "TSM", "MU", "AMD", "MRVL", "ALAB",
     "ASML", "GOOGL", "TSLA", "SPCX", "PLTR", "SKHY",
     "MSTR", "ASST",
     "BTC-USD", "ETH-USD", "SOL-USD", "HYPE32196-USD"
